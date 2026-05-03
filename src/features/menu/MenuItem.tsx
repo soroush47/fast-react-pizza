@@ -7,7 +7,7 @@ function MenuItem({ pizza }) {
   return (
     <li className="flex gap-4 py-2">
       <img
-        src="../../../public/margherita.jfif"
+        src="/margherita.jfif"
         alt={name}
         className={`aspect-square h-24 ${soldOut ? "opacity-70 grayscale" : ""}`}
       />
