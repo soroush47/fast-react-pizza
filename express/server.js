@@ -10,7 +10,7 @@ app.use(express.json());
 app.use(
   cors({
     origin: "http://localhost:5173", // آدرس Vite React
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     credentials: true,
   }),
 );
@@ -251,7 +251,7 @@ let orders = [
     ],
     position: "-9.000,38.000",
     orderPrice: 95,
-    priorityPrice: 19,
+    priorityPrice: 18,
   },
   {
     id: 2,
@@ -285,11 +285,34 @@ let orders = [
     ],
     position: "-9.000,38.000",
     orderPrice: 95,
-    priorityPrice: 19,
+    priorityPrice: 18,
   },
 ];
 
 // CRUD Operations
+
+// Get position
+app.get("/api/position", (req, res) => {
+  const data = {
+    data: { latitude: 32.6565, longitude: 51.6779 },
+  };
+
+  res.json(data);
+});
+
+// Get address
+app.get("/api/address", (req, res) => {
+  const latitude = req.query.latitude;
+  const longitude = req.query.longitude;
+  const data = {
+    data: {
+      position: { latitude, longitude },
+      address: "Esfahan, Naghsh e jahan",
+    },
+  };
+  res.json(data);
+  // res.status(404).json({ message: "Order not found" });
+});
 
 // Get all menu
 app.get("/menu", (req, res) => {
@@ -316,10 +339,43 @@ app.get("/order/:id", (req, res) => {
   }
 });
 
+// Patch an order by ID
+
+app.patch("/order/:id", (req, res) => {
+  const orderId = parseInt(req.params.id);
+  let orderIndex = -1;
+  const order = orders.find((o, index) => {
+    if (o.id === orderId) {
+      orderIndex = index;
+      return true;
+    }
+    return false;
+  });
+  if (orderIndex !== -1)
+    orders[orderIndex] = {
+      ...order,
+      ...req.body,
+      priorityPrice: Math.round(order.orderPrice * 0.2 * 100) / 100,
+    };
+  if (order) {
+    res.json(orders);
+  } else {
+    res.status(404).json({ message: "Order not update" });
+  }
+});
+
 // Create a new order
 app.post("/order", (req, res) => {
+  const orderPrice = req.body.cart.reduce(
+    (sum, item) => sum + item.totalPrice,
+    0,
+  );
   const newOrder = {
     id: orders.length + 1,
+    orderPrice,
+    priorityPrice:
+      Math.round(Number(req.body.priority) * orderPrice * 0.2 * 100) / 100,
+    status: "preparing",
     ...req.body,
   };
   orders.push(newOrder);
